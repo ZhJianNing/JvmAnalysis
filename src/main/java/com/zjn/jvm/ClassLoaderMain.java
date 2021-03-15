@@ -27,16 +27,45 @@ public class ClassLoaderMain {
 
         //BoopStrap ClassLoder是由C/C++编写的，它本身是虚拟机的一部分，并不是一个java类，以null来显示
         System.out.println("BootStrap ClassLoader 加载范围");
-        System.out.println(System.getProperty("sun.boot.class.path"));
+        String[] bootStrapClasspath = System.getProperty("sun.boot.class.path").split(";");
+        for (int i = 0; i < bootStrapClasspath.length; i++) {
+            System.out.println(bootStrapClasspath[i] + existFile(bootStrapClasspath[i]));
+        }
+//        System.out.println(System.getProperty("sun.boot.class.path").replace(";", "\r\n"));
+        System.out.println("");
+        System.out.println("====================================================================================");
+        System.out.println("");
 
         System.out.println("Extention ClassLoader 加载范围");
-        System.out.println(System.getProperty("java.ext.dirs"));
+//        System.out.println(System.getProperty("java.ext.dirs").replace(";", "\r\n"));
+        String[] extClasspaths = System.getProperty("java.ext.dirs").split(";");
+        for (int i = 0; i < extClasspaths.length; i++) {
+            System.out.println(extClasspaths[i] + existFile(extClasspaths[i]));
+        }
+        System.out.println("");
+        System.out.println("====================================================================================");
+        System.out.println("");
+
 
         System.out.println("AppClassLoader 加载范围");
-        System.out.println("主要加载当前应用下的classpath路径下的类。之前我们在环境变量中配置的classpath就是指定AppClassLoader的类加载路径");
+        System.out.println("【注：】主要加载当前应用下的classpath路径下的类。之前我们在环境变量中配置的classpath就是指定AppClassLoader的类加载路径");
+        //System.getProperty("java.class.path")这个属性是所有的类加载路径，需要排除前面两个范围，前面两个范围有可能有不存在路径，这个范围应该是去除了前两个不存在的路径
+//        System.out.println(System.getProperty("java.class.path").replace(";", "\r\n"));
+        String[] appClasspaths = System.getProperty("java.class.path").split(";");
+        for (int i = 0; i < appClasspaths.length; i++) {
+            //过滤掉boot和ext
+            if(isExist(bootStrapClasspath,extClasspaths,appClasspaths[i])){
+                continue;
+            }
+            System.out.println(appClasspaths[i] + existFile(appClasspaths[i]));
+        }
+        System.out.println("");
+        System.out.println("====================================================================================");
+        System.out.println("");
+
 
         System.out.println("自定义类加载器 加载范围");
-        System.out.println("排除以上三个范围的范围");
+        System.out.println("排除以上三个范围的范围，创建自定义类加载器时指定的路径");
 
 
         //这个类class的路径
@@ -52,6 +81,33 @@ public class ClassLoaderMain {
             Method method = c.getMethod("say", null);
             method.invoke(obj, null);
             System.out.println(c.getClassLoader().toString());
+        }
+    }
+
+
+    private static boolean isExist(String[] bootStrapClasspath, String[] extClasspaths, String classpath) {
+        for (int j = 0; j < bootStrapClasspath.length; j++) {
+            if (bootStrapClasspath[j].equals(classpath)) {
+                return true;
+            }
+        }
+//        for (int j = 0; j < extClasspaths.length; j++) {
+//            if (extClasspaths[j].equals(classpath)) {
+//                return true;
+//            }
+//        }
+        if(classpath.startsWith("C:\\Program Files\\Java\\jdk1.8.0_131\\jre\\lib\\ext\\")){
+            return true;
+        }
+        return false;
+    }
+
+    private static String existFile(String path) {
+        File file = new File(path);
+        if (file.exists()) {
+            return "";
+        } else {
+            return "【不存在】";
         }
     }
 
