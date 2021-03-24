@@ -9,7 +9,12 @@ package com.zjn.jvm;
  * @date 2020/8/18
  **/
 public class ClassLoaderTest {
+    public static void main(String[] args) {
+        new ClassLoaderTest().say();
+    }
     public void say() {
+
         System.out.println("Hello MyClassLoader");
+        System.out.println("我的类加载器是" + this.getClass().getClassLoader());
     }
 }

@@ -1,13 +1,21 @@
 package com.zjn.jvm;
 
+
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+
+//测试静态导包【导入内部静态类】
+import static java.lang.System.out;
+
 
 /**
  * ClassLoaderMain
  * <p>
  * 类加载机制-双亲委托机制
+ * 双亲委派模型：如果一个类加载器收到了类加载的请求，它首先不会自己去加载这个类，而是把这个请求委派给父类加载器去完成，
+ * 每一层的类加载器都是如此，这样所有的加载请求都会被传送到顶层的启动类加载器中，只有当父加载无法完成加载请求（它的搜
+ * 索范围中没找到所需的类）时，子加载器才会尝试去加载类。
  * <p>
  * 　　 例如：当jvm要加载Test.class的时候，
  * 　　（1）首先会到自定义加载器中查找，看是否已经加载过，如果已经加载过，则返回字节码。
@@ -25,36 +33,36 @@ public class ClassLoaderMain {
 
     public static void main(String[] args) throws ClassNotFoundException, IllegalAccessException, IllegalArgumentException, InstantiationException, NoSuchMethodException, SecurityException, InvocationTargetException {
 
+        out.println("测试静态导包");
         //BoopStrap ClassLoder是由C/C++编写的，它本身是虚拟机的一部分，并不是一个java类，以null来显示
-        System.out.println("BootStrap ClassLoader 加载范围");
+        //留了一个自定义class的目录接口【C:\Program Files\Java\jdk1.8.0_131\jre\classes】，可以在该目录下定义某些class类，加载优先权高于其他类加载器
+        System.out.println("BootStrap ClassLoader【启动类加载器】 加载范围");
         String[] bootStrapClasspath = System.getProperty("sun.boot.class.path").split(";");
         for (int i = 0; i < bootStrapClasspath.length; i++) {
             System.out.println(bootStrapClasspath[i] + existFile(bootStrapClasspath[i]));
         }
-//        System.out.println(System.getProperty("sun.boot.class.path").replace(";", "\r\n"));
         System.out.println("");
         System.out.println("====================================================================================");
         System.out.println("");
 
-        System.out.println("Extention ClassLoader 加载范围");
-//        System.out.println(System.getProperty("java.ext.dirs").replace(";", "\r\n"));
+        System.out.println("Extention ClassLoader【扩展类加载器】加载范围");
         String[] extClasspaths = System.getProperty("java.ext.dirs").split(";");
         for (int i = 0; i < extClasspaths.length; i++) {
             System.out.println(extClasspaths[i] + existFile(extClasspaths[i]));
         }
+        System.out.println("也可以使用  -Xbootclasspath=xx  启动参数可以添加范围");
         System.out.println("");
         System.out.println("====================================================================================");
         System.out.println("");
 
 
-        System.out.println("AppClassLoader 加载范围");
+        System.out.println("AppClassLoader【应用类加载器】加载范围");
         System.out.println("【注：】主要加载当前应用下的classpath路径下的类。之前我们在环境变量中配置的classpath就是指定AppClassLoader的类加载路径");
         //System.getProperty("java.class.path")这个属性是所有的类加载路径，需要排除前面两个范围，前面两个范围有可能有不存在路径，这个范围应该是去除了前两个不存在的路径
-//        System.out.println(System.getProperty("java.class.path").replace(";", "\r\n"));
         String[] appClasspaths = System.getProperty("java.class.path").split(";");
         for (int i = 0; i < appClasspaths.length; i++) {
             //过滤掉boot和ext
-            if(isExist(bootStrapClasspath,extClasspaths,appClasspaths[i])){
+            if (isExist(bootStrapClasspath, extClasspaths, appClasspaths[i])) {
                 continue;
             }
             System.out.println(appClasspaths[i] + existFile(appClasspaths[i]));
@@ -64,12 +72,15 @@ public class ClassLoaderMain {
         System.out.println("");
 
 
-        System.out.println("自定义类加载器 加载范围");
+        System.out.println("MyClassLoader【自定义类加载器】加载范围");
         System.out.println("排除以上三个范围的范围，创建自定义类加载器时指定的路径");
-
-
-        //这个类class的路径
+        //设置自定义类加载器，加载路径
         String myClassPath = "D:\\githubWorkspace\\JvmAnalysis\\src\\other";
+        System.out.println(myClassPath);
+        System.out.println("");
+        System.out.println("====================================================================================");
+        System.out.println("");
+
         //自定义类加载器的加载路径
         MyClassLoader myClassLoader = new MyClassLoader(myClassPath);//静态内部类使用方法
 //        MyClassLoader myClassLoader = new ClassLoaderMain().new MyClassLoader(myClassPath); //非静态内部类使用方法
@@ -80,7 +91,7 @@ public class ClassLoaderMain {
             Object obj = c.newInstance();
             Method method = c.getMethod("say", null);
             method.invoke(obj, null);
-            System.out.println(c.getClassLoader().toString());
+            System.out.println(c.getClassLoader());
         }
     }
 
@@ -96,7 +107,8 @@ public class ClassLoaderMain {
 //                return true;
 //            }
 //        }
-        if(classpath.startsWith("C:\\Program Files\\Java\\jdk1.8.0_131\\jre\\lib\\ext\\")){
+        //C:\Program Files\Java\jdk1.8.0_131\jre\lib\ext\
+        if (classpath.startsWith(System.getProperty("java.home") + File.separator + "lib" + File.separator + "ext")) {
             return true;
         }
         return false;

@@ -12,6 +12,7 @@ public class FinalizeEscapeGC {
     protected void finalize() throws Throwable {
         //执行Object的finalize方法
         super.finalize();
+        System.out.println(Thread.currentThread().getName());
 
         System.out.println(System.currentTimeMillis() + "Object的finalize方法第一次被执行了");
         // 将这个对象赋值给静态属性对象？？？？？
